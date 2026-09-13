@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: oficina-app
+  namespace: oficina-homolog
+spec:
+  selector:
+    app: oficina-app
+  ports:
+    - port: 80
+      targetPort: 8080
+  # LoadBalancer: em GKE isso provisiona um IP externo público de verdade
+  # (diferente do NodePort usado no kind local na Fase 2).
+  type: LoadBalancer

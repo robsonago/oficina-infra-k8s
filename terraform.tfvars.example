@@ -1,0 +1,2 @@
+project_id                         = "oficina-501820"
+app_cloudsql_service_account_email = "oficina-app-cloudsql@oficina-501820.iam.gserviceaccount.com"
