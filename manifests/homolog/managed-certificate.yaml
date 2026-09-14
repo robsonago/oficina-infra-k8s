@@ -1,0 +1,8 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: oficina-app-cert
+  namespace: oficina-homolog
+spec:
+  domains:
+    - 136.68.247.198.nip.io

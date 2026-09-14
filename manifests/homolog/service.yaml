@@ -9,6 +9,7 @@ spec:
   ports:
     - port: 80
       targetPort: 8080
-  # LoadBalancer: em GKE isso provisiona um IP externo público de verdade
-  # (diferente do NodePort usado no kind local na Fase 2).
-  type: LoadBalancer
+  # ClusterIP: o tráfego externo entra pelo Ingress (GCLB), não diretamente
+  # pelo Service. O GKE cria os Network Endpoint Groups automaticamente
+  # (container-native load balancing) para o Ingress apontar aqui.
+  type: ClusterIP
