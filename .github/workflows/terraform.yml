@@ -40,9 +40,6 @@ jobs:
         with:
           terraform_version: '1.6.6'
 
-      - name: Instalar gke-gcloud-auth-plugin
-        run: |
-          gcloud components install gke-gcloud-auth-plugin --quiet
 
       - name: terraform.tfvars (valores não sensíveis do example)
         run: cp terraform.tfvars.example terraform.tfvars
@@ -52,8 +49,6 @@ jobs:
 
       - name: Terraform Plan
         run: terraform plan -no-color -input=false
-        env:
-          USE_GKE_GCLOUD_AUTH_PLUGIN: "True"
 
   # ─────────────────────────────────────────
   # Push em main: aplica de verdade.
@@ -80,9 +75,6 @@ jobs:
         with:
           terraform_version: '1.6.6'
 
-      - name: Instalar gke-gcloud-auth-plugin
-        run: |
-          gcloud components install gke-gcloud-auth-plugin --quiet
 
       - name: terraform.tfvars (valores não sensíveis do example)
         run: cp terraform.tfvars.example terraform.tfvars
@@ -92,5 +84,3 @@ jobs:
 
       - name: Terraform Apply
         run: terraform apply -auto-approve -input=false
-        env:
-          USE_GKE_GCLOUD_AUTH_PLUGIN: "True"
