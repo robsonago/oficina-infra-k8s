@@ -77,6 +77,16 @@ data "google_secret_manager_secret_version" "db_password" {
   secret = "oficina-db-password"
 }
 
+data "google_secret_manager_secret_version" "newrelic_license_key" {
+  secret = "newrelic-license-key"
+}
+
+resource "google_secret_manager_secret_iam_member" "app_reads_newrelic_key" {
+  secret_id = "newrelic-license-key"
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${var.app_cloudsql_service_account_email}"
+}
+
 locals {
   db_user = "oficina"
 
@@ -98,10 +108,11 @@ resource "kubernetes_secret" "oficina_homolog" {
   }
 
   data = {
-    DB_USERNAME = local.db_user
-    DB_PASSWORD = data.google_secret_manager_secret_version.db_password.secret_data
-    DB_URL      = local.db_url_homolog
-    JWT_SECRET  = local.jwt_secret
+    DB_USERNAME         = local.db_user
+    DB_PASSWORD         = data.google_secret_manager_secret_version.db_password.secret_data
+    DB_URL              = local.db_url_homolog
+    JWT_SECRET          = local.jwt_secret
+    NEW_RELIC_LICENSE_KEY = data.google_secret_manager_secret_version.newrelic_license_key.secret_data
   }
 
   type = "Opaque"
@@ -114,10 +125,11 @@ resource "kubernetes_secret" "oficina_producao" {
   }
 
   data = {
-    DB_USERNAME = local.db_user
-    DB_PASSWORD = data.google_secret_manager_secret_version.db_password.secret_data
-    DB_URL      = local.db_url_producao
-    JWT_SECRET  = local.jwt_secret
+    DB_USERNAME         = local.db_user
+    DB_PASSWORD         = data.google_secret_manager_secret_version.db_password.secret_data
+    DB_URL              = local.db_url_producao
+    JWT_SECRET          = local.jwt_secret
+    NEW_RELIC_LICENSE_KEY = data.google_secret_manager_secret_version.newrelic_license_key.secret_data
   }
 
   type = "Opaque"
@@ -138,6 +150,7 @@ resource "kubernetes_config_map" "oficina_homolog" {
     SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE = "3"
     NOTIFICATIONS_PUBSUB_PROJECT_ID            = var.project_id
     NOTIFICATIONS_PUBSUB_TOPIC                 = google_pubsub_topic.notificacoes_homolog.name
+    NEW_RELIC_APP_NAME                         = "oficina-app-homolog"
   }
 }
 
@@ -153,6 +166,7 @@ resource "kubernetes_config_map" "oficina_producao" {
     SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE = "3"
     NOTIFICATIONS_PUBSUB_PROJECT_ID            = var.project_id
     NOTIFICATIONS_PUBSUB_TOPIC                 = google_pubsub_topic.notificacoes_producao.name
+    NEW_RELIC_APP_NAME                         = "oficina-app-producao"
   }
 }
 

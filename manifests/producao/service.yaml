@@ -3,6 +3,10 @@ kind: Service
 metadata:
   name: oficina-app
   namespace: oficina-producao
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+    prometheus.io/path: "/actuator/prometheus"
 spec:
   selector:
     app: oficina-app
