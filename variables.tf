@@ -22,15 +22,15 @@ variable "cluster_name" {
 }
 
 variable "machine_type" {
-  description = "Tipo de máquina dos nós (baixo custo, adequado para carga de estudo)"
+  description = "Tipo de máquina dos nós. e2-small/e2-medium têm a mesma contagem nominal de vCPU (2), então o Kubernetes reserva a mesma fatia fixa de CPU para os add-ons gerenciados do GKE nos dois casos, sobrando pouco pros pods da aplicação. e2-standard-4 dilui essa taxa fixa contra mais vCPUs de verdade."
   type        = string
-  default     = "e2-small"
+  default     = "e2-standard-4"
 }
 
 variable "node_count" {
-  description = "Número de nós do node pool (fixo; o autoscaling de carga é feito pelo HPA em nível de Pod, não de nó, para manter custo previsível)"
+  description = "Número de nós do node pool (fixo; o autoscaling de carga é feito pelo HPA em nível de Pod, não de nó, para manter custo previsível). 1 nó só, sem redundância — aceitável para ambiente de estudo."
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "preemptible" {
@@ -48,4 +48,9 @@ variable "gateway_region" {
   description = "Região do API Gateway (southamerica-east1 não é suportada pelo produto; usamos a região suportada mais próxima)"
   type        = string
   default     = "us-east1"
+}
+
+variable "cloudsql_instance_connection_name" {
+  description = "Connection name da instância Cloud SQL (projeto:região:instância), usado pelo Cloud SQL Auth Proxy"
+  type        = string
 }
