@@ -42,11 +42,9 @@ Os manifests da aplicação (`Deployment`/`Service`/`HPA`) estão em
 [`manifests/homolog`](manifests/homolog) e
 [`manifests/producao`](manifests/producao) — um conjunto por ambiente. O
 `Service` é `ClusterIP`: o tráfego externo entra por um `Ingress` (ver
-abaixo), não diretamente pelo Service. O deploy automático desses manifests
-via CI/CD ainda será configurado; até lá, o `imagePullSecret` `ghcr-secret`
-de cada namespace precisa ser criado manualmente
-(`kubectl create secret docker-registry`) com um token de leitura do GHCR —
-ou o pacote `oficina-app` no GHCR precisa ser tornado público.
+abaixo), não diretamente pelo Service. O deploy automático desses manifests via CI/CD ainda será configurado. A
+imagem `ghcr.io/robsonago/oficina-app` é pública, então não é preciso
+`imagePullSecret`.
 
 ### Exposição pública HTTPS + API Gateway
 

@@ -77,20 +77,18 @@ data "google_secret_manager_secret_version" "db_password" {
   secret = "oficina-db-password"
 }
 
-data "google_secret_manager_secret_version" "db_url_homolog" {
-  secret = "oficina-db-url-homolog"
-}
-
-data "google_secret_manager_secret_version" "db_url_producao" {
-  secret = "oficina-db-url-producao"
-}
-
 locals {
   db_user = "oficina"
 
-  # Mesmos valores usados hoje em k8s/secret.yaml (Fase 2), reaproveitados
-  # por ambiente até a Parte 5 (notificação via Pub/Sub) trocar esse fluxo.
+  # Chave usada para assinar/validar o JWT emitido pela própria aplicação
+  # (login usuário/senha). Reaproveitada tal como já configurada.
   jwt_secret = "bXlTdXBlclNlY3JldEtleUZvckpXVFN5c3RlbU9maWNpbmFNZWNhbmljYTIwMjQ="
+
+  # A instância Cloud SQL não libera nenhuma rede externa (ver
+  # oficina-infra-db): a conexão só é possível via Cloud SQL Auth Proxy,
+  # rodando como sidecar no próprio pod e escutando em localhost.
+  db_url_homolog  = "jdbc:postgresql://127.0.0.1:5432/oficina_homolog"
+  db_url_producao = "jdbc:postgresql://127.0.0.1:5432/oficina_producao"
 }
 
 resource "kubernetes_secret" "oficina_homolog" {
@@ -102,7 +100,7 @@ resource "kubernetes_secret" "oficina_homolog" {
   data = {
     DB_USERNAME = local.db_user
     DB_PASSWORD = data.google_secret_manager_secret_version.db_password.secret_data
-    DB_URL      = data.google_secret_manager_secret_version.db_url_homolog.secret_data
+    DB_URL      = local.db_url_homolog
     JWT_SECRET  = local.jwt_secret
   }
 
@@ -118,7 +116,7 @@ resource "kubernetes_secret" "oficina_producao" {
   data = {
     DB_USERNAME = local.db_user
     DB_PASSWORD = data.google_secret_manager_secret_version.db_password.secret_data
-    DB_URL      = data.google_secret_manager_secret_version.db_url_producao.secret_data
+    DB_URL      = local.db_url_producao
     JWT_SECRET  = local.jwt_secret
   }
 
@@ -134,6 +132,12 @@ resource "kubernetes_config_map" "oficina_homolog" {
   data = {
     JWT_EXPIRATION = "86400000"
     SERVER_PORT    = "8080"
+    # db-f1-micro tem um limite baixo de conexões simultâneas; com vários
+    # pods batendo na mesma instância, o pool padrão do Hikari (10 por pod)
+    # estoura esse limite rápido.
+    SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE = "3"
+    NOTIFICATIONS_PUBSUB_PROJECT_ID            = var.project_id
+    NOTIFICATIONS_PUBSUB_TOPIC                 = google_pubsub_topic.notificacoes_homolog.name
   }
 }
 
@@ -146,6 +150,9 @@ resource "kubernetes_config_map" "oficina_producao" {
   data = {
     JWT_EXPIRATION = "86400000"
     SERVER_PORT    = "8080"
+    SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE = "3"
+    NOTIFICATIONS_PUBSUB_PROJECT_ID            = var.project_id
+    NOTIFICATIONS_PUBSUB_TOPIC                 = google_pubsub_topic.notificacoes_producao.name
   }
 }
 
@@ -256,4 +263,29 @@ resource "google_api_gateway_gateway" "producao" {
   api_config = google_api_gateway_api_config.producao.id
   gateway_id = "oficina-gateway-producao"
   region     = var.gateway_region
+}
+
+# ──────────────────────────────────────────
+# Pub/Sub — notificação assíncrona de orçamento disponível.
+# A aplicação publica; a function de notificação (oficina-auth-function)
+# consome e manda o e-mail de fato.
+# ──────────────────────────────────────────
+resource "google_pubsub_topic" "notificacoes_homolog" {
+  name = "oficina-notificacoes-homolog"
+}
+
+resource "google_pubsub_topic" "notificacoes_producao" {
+  name = "oficina-notificacoes-producao"
+}
+
+resource "google_pubsub_topic_iam_member" "app_publisher_homolog" {
+  topic  = google_pubsub_topic.notificacoes_homolog.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:${var.app_cloudsql_service_account_email}"
+}
+
+resource "google_pubsub_topic_iam_member" "app_publisher_producao" {
+  topic  = google_pubsub_topic.notificacoes_producao.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:${var.app_cloudsql_service_account_email}"
 }

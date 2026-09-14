@@ -14,9 +14,25 @@ spec:
         app: oficina-app
     spec:
       serviceAccountName: oficina-app
-      imagePullSecrets:
-        - name: ghcr-secret
       containers:
+        - name: cloud-sql-proxy
+          # A instância Cloud SQL não libera nenhuma rede externa; a conexão
+          # só é possível por aqui, autenticando via Workload Identity (a
+          # service account já está vinculada em oficina-app).
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.25.4
+          args:
+            - "--structured-logs"
+            - "--port=5432"
+            - "oficina-501820:southamerica-east1:oficina-postgres"
+          securityContext:
+            runAsNonRoot: true
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
         - name: oficina-app
           image: ghcr.io/robsonago/oficina-app:latest
           imagePullPolicy: Always
