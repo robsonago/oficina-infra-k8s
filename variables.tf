@@ -1,0 +1,45 @@
+variable "project_id" {
+  description = "ID do projeto GCP (ex.: oficina-501820)"
+  type        = string
+}
+
+variable "region" {
+  description = "Região do cluster (usada para o provider; o cluster em si é zonal)"
+  type        = string
+  default     = "southamerica-east1"
+}
+
+variable "zone" {
+  description = "Zona do cluster GKE. Cluster zonal (não regional) para se qualificar ao free tier de 1 cluster zonal sem taxa de gerenciamento por billing account, e para reduzir custo (menos réplicas do control plane)."
+  type        = string
+  default     = "southamerica-east1-a"
+}
+
+variable "cluster_name" {
+  description = "Nome do cluster GKE"
+  type        = string
+  default     = "oficina-gke"
+}
+
+variable "machine_type" {
+  description = "Tipo de máquina dos nós (baixo custo, adequado para carga de estudo)"
+  type        = string
+  default     = "e2-small"
+}
+
+variable "node_count" {
+  description = "Número de nós do node pool (fixo; o autoscaling de carga é feito pelo HPA em nível de Pod, não de nó, para manter custo previsível)"
+  type        = number
+  default     = 2
+}
+
+variable "preemptible" {
+  description = "Usa nós preemptible/spot (bem mais baratos, aceitável para ambiente de estudo/homologação)"
+  type        = bool
+  default     = true
+}
+
+variable "app_cloudsql_service_account_email" {
+  description = "E-mail da service account criada em oficina-infra-db (google_service_account.app_cloudsql), usada via Workload Identity para o Cloud SQL Auth Proxy"
+  type        = string
+}
