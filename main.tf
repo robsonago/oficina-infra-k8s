@@ -150,6 +150,7 @@ resource "kubernetes_config_map" "oficina_homolog" {
     SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE = "3"
     NOTIFICATIONS_PUBSUB_PROJECT_ID            = var.project_id
     NOTIFICATIONS_PUBSUB_TOPIC                 = google_pubsub_topic.notificacoes_homolog.name
+    NOTIFICATIONS_EMAIL_PROVIDER               = "pubsub"
     NEW_RELIC_APP_NAME                         = "oficina-app-homolog"
   }
 }
@@ -166,6 +167,7 @@ resource "kubernetes_config_map" "oficina_producao" {
     SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE = "3"
     NOTIFICATIONS_PUBSUB_PROJECT_ID            = var.project_id
     NOTIFICATIONS_PUBSUB_TOPIC                 = google_pubsub_topic.notificacoes_producao.name
+    NOTIFICATIONS_EMAIL_PROVIDER               = "pubsub"
     NEW_RELIC_APP_NAME                         = "oficina-app-producao"
   }
 }
