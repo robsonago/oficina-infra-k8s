@@ -186,3 +186,74 @@ resource "google_service_account_iam_member" "workload_identity_producao" {
   role                = "roles/iam.workloadIdentityUser"
   member              = "serviceAccount:${var.project_id}.svc.id.goog[oficina-producao/oficina-app]"
 }
+
+# ──────────────────────────────────────────
+# IPs estáticos globais + certificados gerenciados para expor a aplicação
+# via HTTPS público (exigido pelo backend do API Gateway).
+# Usa nip.io (hostname = IP + ".nip.io") em vez de um domínio próprio.
+# ──────────────────────────────────────────
+resource "google_compute_global_address" "homolog" {
+  name = "oficina-homolog-ip"
+}
+
+resource "google_compute_global_address" "producao" {
+  name = "oficina-producao-ip"
+}
+
+# ──────────────────────────────────────────
+# API Gateway — porta de entrada pública única, na frente da aplicação.
+# Um API Config + Gateway por ambiente (homolog/produção), cada um apontando
+# para o respectivo host HTTPS (Ingress + certificado gerenciado, acima).
+# ──────────────────────────────────────────
+resource "google_api_gateway_api" "oficina" {
+  provider = google-beta
+  api_id   = "oficina-api"
+}
+
+resource "google_api_gateway_api_config" "homolog" {
+  provider              = google-beta
+  api                   = google_api_gateway_api.oficina.api_id
+  api_config_id_prefix  = "homolog-"
+
+  openapi_documents {
+    document {
+      path     = "openapi.yaml"
+      contents = filebase64("${path.module}/gateway/homolog.yaml")
+    }
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "google_api_gateway_gateway" "homolog" {
+  provider   = google-beta
+  api_config = google_api_gateway_api_config.homolog.id
+  gateway_id = "oficina-gateway-homolog"
+  region     = var.gateway_region
+}
+
+resource "google_api_gateway_api_config" "producao" {
+  provider              = google-beta
+  api                   = google_api_gateway_api.oficina.api_id
+  api_config_id_prefix  = "producao-"
+
+  openapi_documents {
+    document {
+      path     = "openapi.yaml"
+      contents = filebase64("${path.module}/gateway/producao.yaml")
+    }
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "google_api_gateway_gateway" "producao" {
+  provider   = google-beta
+  api_config = google_api_gateway_api_config.producao.id
+  gateway_id = "oficina-gateway-producao"
+  region     = var.gateway_region
+}

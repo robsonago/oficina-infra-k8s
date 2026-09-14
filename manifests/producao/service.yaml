@@ -9,4 +9,7 @@ spec:
   ports:
     - port: 80
       targetPort: 8080
-  type: LoadBalancer
+  # ClusterIP: o tráfego externo entra pelo Ingress (GCLB), não diretamente
+  # pelo Service. O GKE cria os Network Endpoint Groups automaticamente
+  # (container-native load balancing) para o Ingress apontar aqui.
+  type: ClusterIP

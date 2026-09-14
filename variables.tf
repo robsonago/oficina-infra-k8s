@@ -43,3 +43,9 @@ variable "app_cloudsql_service_account_email" {
   description = "E-mail da service account criada em oficina-infra-db (google_service_account.app_cloudsql), usada via Workload Identity para o Cloud SQL Auth Proxy"
   type        = string
 }
+
+variable "gateway_region" {
+  description = "Região do API Gateway (southamerica-east1 não é suportada pelo produto; usamos a região suportada mais próxima)"
+  type        = string
+  default     = "us-east1"
+}

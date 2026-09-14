@@ -1,0 +1,15 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: oficina-app-ingress
+  namespace: oficina-homolog
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: "oficina-homolog-ip"
+    networking.gke.io/managed-certificates: "oficina-app-cert"
+spec:
+  ingressClassName: gce
+  defaultBackend:
+    service:
+      name: oficina-app
+      port:
+        number: 80

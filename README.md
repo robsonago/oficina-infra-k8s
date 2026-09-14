@@ -41,11 +41,39 @@ Dockerfile não se aplica a este repositório (Terraform não usa Docker).
 Os manifests da aplicação (`Deployment`/`Service`/`HPA`) estão em
 [`manifests/homolog`](manifests/homolog) e
 [`manifests/producao`](manifests/producao) — um conjunto por ambiente. O
-`Service` usa `type: LoadBalancer` (IP público real), adequado para cloud.
-O deploy automático desses manifests via CI/CD ainda será configurado; até
-lá, o `imagePullSecret` `ghcr-secret` de cada namespace precisa ser criado
-manualmente (`kubectl create secret docker-registry`) com um token de leitura
-do GHCR.
+`Service` é `ClusterIP`: o tráfego externo entra por um `Ingress` (ver
+abaixo), não diretamente pelo Service. O deploy automático desses manifests
+via CI/CD ainda será configurado; até lá, o `imagePullSecret` `ghcr-secret`
+de cada namespace precisa ser criado manualmente
+(`kubectl create secret docker-registry`) com um token de leitura do GHCR —
+ou o pacote `oficina-app` no GHCR precisa ser tornado público.
+
+### Exposição pública HTTPS + API Gateway
+
+Cada namespace tem um IP estático global reservado (Terraform,
+`google_compute_global_address`), um `Ingress` (classe `gce`) e um
+`ManagedCertificate` apontando para um hostname
+[nip.io](https://nip.io) construído a partir desse IP (ex.:
+`34.120.1.2.nip.io`) — assim a aplicação fica disponível via HTTPS público
+com certificado confiável, sem precisar de domínio próprio. Isso é exigido
+porque o backend do Google API Gateway só aceita endereços HTTPS.
+
+Na frente disso, [`gateway/`](gateway) tem a especificação OpenAPI 2.0
+(Swagger) usada para criar o Google API Gateway — uma API com um
+`API Config`/`Gateway` por ambiente (`oficina-gateway-homolog` e
+`oficina-gateway-producao`, região `us-east1`; API Gateway não está
+disponível em `southamerica-east1`). O gateway repassa o path original para
+o backend (`x-google-backend`) e documenta, por rota, quais exigem token
+(`security: [{bearerAuth: []}]`) — a validação de fato do JWT continua na
+aplicação (Spring Security), já que o esquema atual (HMAC com chave
+compartilhada) não é compatível com a validação nativa de JWT do API
+Gateway, que exige um emissor com chaves públicas (JWKS). A rota de
+autenticação por CPF (Cloud Function) será adicionada ao spec quando essa
+function existir.
+
+`gateway/oficina-gateway.template.yaml` é a fonte única; `gateway/homolog.yaml`
+e `gateway/producao.yaml` são gerados substituindo o host do
+`x-google-backend`.
 
 ## Pré-requisitos
 
@@ -78,7 +106,11 @@ kubectl get ns
 
 - `get_credentials_command`: comando pronto para configurar o `kubectl`.
 - `namespaces`: os dois namespaces criados.
+- `homolog_hostname`/`producao_hostname`: hostnames nip.io usados pelo
+  `ManagedCertificate` e pelo `x-google-backend` do gateway.
+- `gateway_homolog_url`/`gateway_producao_url`: URL pública de cada
+  ambiente — é por aqui que a API deve ser chamada (não diretamente pelo
+  hostname nip.io).
 
-> Este README será complementado com diagrama de arquitetura e link dos
-> ambientes ativos (IP dos `LoadBalancer`, ou a URL do API Gateway quando ele
-> for configurado na frente da aplicação).
+> Este README será complementado com diagrama de arquitetura conforme o
+> restante do trabalho avança.
