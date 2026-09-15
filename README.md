@@ -121,12 +121,18 @@ Na frente disso, [`gateway/`](gateway) tem a especificação OpenAPI 2.0
 `oficina-gateway-producao`, região `us-east1`; API Gateway não está
 disponível em `southamerica-east1`, ver
 [RFC-001](https://github.com/robsonago/oficina/blob/main/docs/rfcs/001-escolha-da-nuvem.md)).
-O gateway repassa o path original para o backend (`x-google-backend`) e
-documenta, por rota, quais exigem token (`security: [{bearerAuth: []}]`) — a
-validação de fato do JWT continua na aplicação (Spring Security), já que o
-esquema atual (HMAC com chave compartilhada) não é compatível com a
-validação nativa de JWT do API Gateway, que exige um emissor com chaves
-públicas (JWKS).
+O gateway repassa o path original para o backend (`x-google-backend`), sem
+nenhum bloco `security`/`securityDefinitions` no spec — a validação do JWT é
+feita inteiramente pela aplicação (Spring Security). **Não é só uma escolha
+de design**: declarar `security: [{bearerAuth: []}], type: apiKey` no Swagger
+2.0 faz o Google API Gateway **consumir** o header `Authorization` como se
+fosse autenticação própria dele, em vez de repassá-lo ao backend — quebrando
+toda rota protegida (bug real encontrado nesta sessão, corrigido removendo o
+bloco). O esquema atual de token (HMAC com chave compartilhada) também não é
+compatível com a validação nativa de JWT do API Gateway, que exige um emissor
+com chaves públicas (JWKS) — mais um motivo pra não delegar autenticação ao
+Gateway. Quais rotas exigem token está documentado na tabela de endpoints do
+README de [`oficina`](https://github.com/robsonago/oficina#11-endpoints-principais).
 
 `gateway/oficina-gateway.template.yaml` é a referência com o placeholder
 `__BACKEND_HOST__`; `gateway/homolog.yaml` e `gateway/producao.yaml` são
