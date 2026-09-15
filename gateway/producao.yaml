@@ -16,7 +16,7 @@ schemes:
 produces:
   - application/json
 x-google-backend:
-  address: https://136.68.30.187.nip.io
+  address: https://136.68.248.181.nip.io
 securityDefinitions:
   bearerAuth:
     type: apiKey

@@ -5,4 +5,4 @@ metadata:
   namespace: oficina-producao
 spec:
   domains:
-    - 136.68.30.187.nip.io
+    - 136.68.248.181.nip.io
