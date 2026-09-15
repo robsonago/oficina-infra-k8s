@@ -5,14 +5,14 @@ info:
     Gateway público da aplicação oficina. Roteia todo o tráfego para o
     backend (aplicação Spring Boot no GKE) preservando o path original.
     A validação do token JWT é feita inteiramente pela própria aplicação
-    (Spring Security) — o Gateway não declara um esquema "security" porque
-    o tipo apiKey (único suportado pelo Swagger 2.0 pra header customizado)
-    faz o Google API Gateway consumir o header Authorization em vez de
-    repassá-lo ao backend, quebrando a autenticação; o esquema atual de
-    token (HMAC com chave compartilhada) também não é compatível com a
-    validação nativa de JWT do API Gateway, que espera um emissor com
-    chaves públicas (JWKS). Quais rotas exigem token está documentado na
-    tabela de endpoints do README da aplicação principal, não aqui.
+    (Spring Security). Dois cuidados pra isso funcionar: (1) sem
+    `disable_auth: true` no x-google-backend, o ESPv2 (o proxy por trás do
+    API Gateway) gera seu próprio token de identidade e sobrescreve o header
+    Authorization, movendo o token do cliente pra X-Forwarded-Authorization
+    — quebra 100% das rotas protegidas sem gerar nenhum erro óbvio; (2) por
+    isso também não declaramos um esquema "security" tipo apiKey aqui — quais
+    rotas exigem token está documentado na tabela de endpoints do README da
+    aplicação principal, não neste spec.
   version: 1.0.0
 schemes:
   - https
@@ -20,6 +20,7 @@ produces:
   - application/json
 x-google-backend:
   address: https://__BACKEND_HOST__
+  disable_auth: true
 
 paths:
   /api/auth/login:
