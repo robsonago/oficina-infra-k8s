@@ -4,12 +4,15 @@ info:
   description: >-
     Gateway público da aplicação oficina. Roteia todo o tráfego para o
     backend (aplicação Spring Boot no GKE) preservando o path original.
-    A validação do token JWT continua acontecendo na própria aplicação
-    (Spring Security); os campos "security" abaixo documentam quais rotas
-    exigem token, sem que o gateway valide a assinatura — o esquema atual
-    de token (HMAC com chave compartilhada) não é compatível com a
+    A validação do token JWT é feita inteiramente pela própria aplicação
+    (Spring Security) — o Gateway não declara um esquema "security" porque
+    o tipo apiKey (único suportado pelo Swagger 2.0 pra header customizado)
+    faz o Google API Gateway consumir o header Authorization em vez de
+    repassá-lo ao backend, quebrando a autenticação; o esquema atual de
+    token (HMAC com chave compartilhada) também não é compatível com a
     validação nativa de JWT do API Gateway, que espera um emissor com
-    chaves públicas (JWKS).
+    chaves públicas (JWKS). Quais rotas exigem token está documentado na
+    tabela de endpoints do README da aplicação principal, não aqui.
   version: 1.0.0
 schemes:
   - https
@@ -17,11 +20,6 @@ produces:
   - application/json
 x-google-backend:
   address: https://136.68.248.181.nip.io
-securityDefinitions:
-  bearerAuth:
-    type: apiKey
-    name: Authorization
-    in: header
 
 paths:
   /api/auth/login:
@@ -40,20 +38,17 @@ paths:
   /api/veiculos:
     post:
       operationId: veiculosCriar
-      security: [{bearerAuth: []}]
       responses:
         "200":
           description: OK
     get:
       operationId: veiculosListar
-      security: [{bearerAuth: []}]
       responses:
         "200":
           description: OK
   /api/veiculos/{id}:
     get:
       operationId: veiculosBuscarPorId
-      security: [{bearerAuth: []}]
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -61,7 +56,6 @@ paths:
           description: OK
     put:
       operationId: veiculosAtualizar
-      security: [{bearerAuth: []}]
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -69,7 +63,6 @@ paths:
           description: OK
     delete:
       operationId: veiculosRemover
-      security: [{bearerAuth: []}]
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -78,7 +71,6 @@ paths:
   /api/veiculos/placa/{placa}:
     get:
       operationId: veiculosBuscarPorPlaca
-      security: [{bearerAuth: []}]
       parameters:
         - {name: placa, in: path, required: true, type: string}
       responses:
@@ -87,7 +79,6 @@ paths:
   /api/veiculos/cliente/{clienteId}:
     get:
       operationId: veiculosBuscarPorCliente
-      security: [{bearerAuth: []}]
       parameters:
         - {name: clienteId, in: path, required: true, type: string}
       responses:
@@ -97,20 +88,17 @@ paths:
   /api/servicos:
     post:
       operationId: servicosCriar
-      security: [{bearerAuth: []}]
       responses:
         "200":
           description: OK
     get:
       operationId: servicosListar
-      security: [{bearerAuth: []}]
       responses:
         "200":
           description: OK
   /api/servicos/{id}:
     get:
       operationId: servicosBuscarPorId
-      security: [{bearerAuth: []}]
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -118,7 +106,6 @@ paths:
           description: OK
     put:
       operationId: servicosAtualizar
-      security: [{bearerAuth: []}]
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -126,7 +113,6 @@ paths:
           description: OK
     delete:
       operationId: servicosRemover
-      security: [{bearerAuth: []}]
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -136,20 +122,17 @@ paths:
   /api/pecas:
     post:
       operationId: pecasCriar
-      security: [{bearerAuth: []}]
       responses:
         "200":
           description: OK
     get:
       operationId: pecasListar
-      security: [{bearerAuth: []}]
       responses:
         "200":
           description: OK
   /api/pecas/{id}:
     get:
       operationId: pecasBuscarPorId
-      security: [{bearerAuth: []}]
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -157,7 +140,6 @@ paths:
           description: OK
     put:
       operationId: pecasAtualizar
-      security: [{bearerAuth: []}]
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -165,7 +147,6 @@ paths:
           description: OK
     delete:
       operationId: pecasRemover
-      security: [{bearerAuth: []}]
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -174,7 +155,6 @@ paths:
   /api/pecas/{id}/estoque:
     patch:
       operationId: pecasAtualizarEstoque
-      security: [{bearerAuth: []}]
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -184,20 +164,17 @@ paths:
   /api/clientes:
     post:
       operationId: clientesCriar
-      security: [{bearerAuth: []}]
       responses:
         "200":
           description: OK
     get:
       operationId: clientesListar
-      security: [{bearerAuth: []}]
       responses:
         "200":
           description: OK
   /api/clientes/{id}:
     get:
       operationId: clientesBuscarPorId
-      security: [{bearerAuth: []}]
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -205,7 +182,6 @@ paths:
           description: OK
     put:
       operationId: clientesAtualizar
-      security: [{bearerAuth: []}]
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -213,7 +189,6 @@ paths:
           description: OK
     delete:
       operationId: clientesRemover
-      security: [{bearerAuth: []}]
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -222,7 +197,6 @@ paths:
   /api/clientes/documento/{documento}:
     get:
       operationId: clientesBuscarPorDocumento
-      security: [{bearerAuth: []}]
       parameters:
         - {name: documento, in: path, required: true, type: string}
       responses:
@@ -232,34 +206,29 @@ paths:
   /api/ordens-servico:
     post:
       operationId: ordensCriar
-      security: [{bearerAuth: []}]
       responses:
         "200":
           description: OK
     get:
       operationId: ordensListar
-      security: [{bearerAuth: []}]
       responses:
         "200":
           description: OK
   /api/ordens-servico/ativas:
     get:
       operationId: ordensListarAtivas
-      security: [{bearerAuth: []}]
       responses:
         "200":
           description: OK
   /api/ordens-servico/estatisticas:
     get:
       operationId: ordensEstatisticas
-      security: [{bearerAuth: []}]
       responses:
         "200":
           description: OK
   /api/ordens-servico/status/{status}:
     get:
       operationId: ordensBuscarPorStatus
-      security: [{bearerAuth: []}]
       parameters:
         - {name: status, in: path, required: true, type: string}
       responses:
@@ -268,7 +237,6 @@ paths:
   /api/ordens-servico/{id}:
     get:
       operationId: ordensBuscarPorId
-      security: [{bearerAuth: []}]
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -285,7 +253,6 @@ paths:
   /api/ordens-servico/{id}/iniciar-diagnostico:
     post:
       operationId: ordensIniciarDiagnostico
-      security: [{bearerAuth: []}]
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -294,7 +261,6 @@ paths:
   /api/ordens-servico/{id}/gerar-orcamento:
     post:
       operationId: ordensGerarOrcamento
-      security: [{bearerAuth: []}]
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -303,7 +269,6 @@ paths:
   /api/ordens-servico/{id}/aprovacao-orcamento:
     post:
       operationId: ordensAprovarOrcamento
-      security: [{bearerAuth: []}]
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -312,7 +277,6 @@ paths:
   /api/ordens-servico/{id}/finalizar:
     post:
       operationId: ordensFinalizar
-      security: [{bearerAuth: []}]
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -321,7 +285,6 @@ paths:
   /api/ordens-servico/{id}/entregar:
     post:
       operationId: ordensEntregar
-      security: [{bearerAuth: []}]
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -330,7 +293,6 @@ paths:
   /api/ordens-servico/{id}/servicos:
     post:
       operationId: ordensAdicionarServico
-      security: [{bearerAuth: []}]
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -339,7 +301,6 @@ paths:
   /api/ordens-servico/{id}/pecas:
     post:
       operationId: ordensAdicionarPeca
-      security: [{bearerAuth: []}]
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
