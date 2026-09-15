@@ -241,5 +241,12 @@ seção 2.
 
 ## 9. Ambiente ativo
 
-_A preencher com o link do Gateway de produção assim que o certificado
-gerenciado estiver `Active` e o ambiente ficar estável._
+| Ambiente | Gateway (rotas de negócio) | Ingress direto (Swagger/health) |
+|---|---|---|
+| Homologação | `https://oficina-gateway-homolog-b0ob3sbi.ue.gateway.dev` | `https://136.68.30.187.nip.io` |
+| Produção | `https://oficina-gateway-producao-b0ob3sbi.ue.gateway.dev` | `https://136.68.248.181.nip.io` |
+
+Certificado gerenciado `Active` nos dois ambientes. **Atenção:** o IP (e portanto
+o host `nip.io`) muda a cada recriação da infra — ver seção 2 — então esses
+links ficam obsoletos depois do próximo `terraform destroy`+`apply`; confira
+`terraform output homolog_ip producao_ip` para os valores atuais.
