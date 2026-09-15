@@ -4,10 +4,10 @@ metadata:
   name: oficina-app-ingress
   namespace: oficina-producao
   annotations:
+    kubernetes.io/ingress.class: "gce"
     kubernetes.io/ingress.global-static-ip-name: "oficina-producao-ip"
     networking.gke.io/managed-certificates: "oficina-app-cert"
 spec:
-  ingressClassName: gce
   defaultBackend:
     service:
       name: oficina-app
