@@ -11,6 +11,31 @@ observabilidade (New Relic) — com dois namespaces isolados
 (`oficina-homolog`/`oficina-producao`) dentro do **mesmo** cluster, em vez de
 dois clusters inteiros.
 
+### Fase 4 — microsserviços
+
+Com a divisão em três microsserviços, este repositório passou a provisionar
+também o que é compartilhado entre eles (arquivo [`fase4.tf`](fase4.tf)):
+
+- **Pub/Sub da saga**, por ambiente: `oficina-billing-comandos-<amb>`,
+  `oficina-execucao-comandos-<amb>`, `oficina-os-eventos-<amb>` e a dead letter
+  `oficina-saga-dlq-<amb>` (retry com backoff de 10s a 5min, DLQ após 5 tentativas).
+- **Identidade e permissões mínimas por serviço** (Workload Identity): cada
+  service account só publica nos tópicos e consome das assinaturas que são dela.
+- **ConfigMaps/Secrets** do Billing (`oficina-billing-*`, incluindo a senha
+  do MongoDB gerada aqui) e do Execution (`oficina-execution-*`).
+- **Ingress com roteamento por serviço**: `/api/orcamentos`, `/api/pagamentos`
+  → Billing; `/api/execucoes` → Execution; o resto → OS Service.
+- **API Gateway** com as rotas dos três serviços.
+
+Os Deployments/Services/HPAs **saíram daqui**: cada microsserviço tem os seus
+manifestos (`k8s/`, Kustomize) no próprio repositório e o pipeline de cada um
+faz o deploy. Aqui ficaram só o Ingress e o certificado, que são de todos.
+
+| Variável | Para quê |
+|---|---|
+| `execucao_service_account_email` | SA criada em `oficina-infra-db` (output de mesmo nome) |
+| `pagamento_provider` | `simulado` (padrão) ou `mercadopago` — no segundo caso lê os secrets `mercadopago-access-token` e `mercadopago-webhook-secret` do Secret Manager |
+
 Dockerfile não se aplica a este repositório (Terraform não usa Docker).
 
 ## Índice
@@ -178,13 +203,27 @@ gcloud container clusters get-credentials oficina-gke \
 kubectl get ns
 ```
 
-Aplique os manifests da aplicação (depois de atualizar os hostnames `nip.io`,
+Aplique o Ingress e o certificado (depois de atualizar os hostnames `nip.io`,
 se o IP tiver mudado — ver seção 2):
 
 ```bash
 kubectl apply -f manifests/homolog/
 kubectl apply -f manifests/producao/
 ```
+
+Os microsserviços são publicados pelos pipelines de cada repositório
+(`oficina`, `oficina-billing-service`, `oficina-execution-service`), que aplicam
+`k8s/overlays/<ambiente>` com a imagem do commit. Para publicar à mão:
+
+```bash
+kubectl apply -k ../oficina/k8s/overlays/homolog
+kubectl apply -k ../oficina-billing-service/k8s/overlays/homolog
+kubectl apply -k ../oficina-execution-service/k8s/overlays/homolog
+```
+
+Se o ambiente GCP tiver sido apagado por completo (inclusive o pool de
+identidade do GitHub Actions e o bucket de state), rode antes
+[`scripts/bootstrap-gcp.sh`](scripts/bootstrap-gcp.sh).
 
 ## 6. CI/CD
 

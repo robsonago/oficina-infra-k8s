@@ -108,10 +108,10 @@ resource "kubernetes_secret" "oficina_homolog" {
   }
 
   data = {
-    DB_USERNAME         = local.db_user
-    DB_PASSWORD         = data.google_secret_manager_secret_version.db_password.secret_data
-    DB_URL              = local.db_url_homolog
-    JWT_SECRET          = local.jwt_secret
+    DB_USERNAME           = local.db_user
+    DB_PASSWORD           = data.google_secret_manager_secret_version.db_password.secret_data
+    DB_URL                = local.db_url_homolog
+    JWT_SECRET            = local.jwt_secret
     NEW_RELIC_LICENSE_KEY = data.google_secret_manager_secret_version.newrelic_license_key.secret_data
   }
 
@@ -125,10 +125,10 @@ resource "kubernetes_secret" "oficina_producao" {
   }
 
   data = {
-    DB_USERNAME         = local.db_user
-    DB_PASSWORD         = data.google_secret_manager_secret_version.db_password.secret_data
-    DB_URL              = local.db_url_producao
-    JWT_SECRET          = local.jwt_secret
+    DB_USERNAME           = local.db_user
+    DB_PASSWORD           = data.google_secret_manager_secret_version.db_password.secret_data
+    DB_URL                = local.db_url_producao
+    JWT_SECRET            = local.jwt_secret
     NEW_RELIC_LICENSE_KEY = data.google_secret_manager_secret_version.newrelic_license_key.secret_data
   }
 
@@ -148,10 +148,16 @@ resource "kubernetes_config_map" "oficina_homolog" {
     # pods batendo na mesma instância, o pool padrão do Hikari (10 por pod)
     # estoura esse limite rápido.
     SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE = "3"
-    NOTIFICATIONS_PUBSUB_PROJECT_ID            = var.project_id
-    NOTIFICATIONS_PUBSUB_TOPIC                 = google_pubsub_topic.notificacoes_homolog.name
-    NOTIFICATIONS_EMAIL_PROVIDER               = "pubsub"
     NEW_RELIC_APP_NAME                         = "oficina-app-homolog"
+    # Fase 4: o OS Service orquestra a saga pelo Pub/Sub e consulta os
+    # outros serviços pelos Services internos do cluster
+    MENSAGERIA_PROVIDER             = "pubsub"
+    PUBSUB_PROJECT_ID               = var.project_id
+    PUBSUB_ASSINATURA_EVENTOS       = google_pubsub_subscription.os_eventos["homolog"].name
+    PUBSUB_TOPICO_BILLING_COMANDOS  = google_pubsub_topic.billing_comandos["homolog"].name
+    PUBSUB_TOPICO_EXECUCAO_COMANDOS = google_pubsub_topic.execucao_comandos["homolog"].name
+    BILLING_URL                     = "http://oficina-billing"
+    EXECUCAO_URL                    = "http://oficina-execution"
   }
 }
 
@@ -162,13 +168,19 @@ resource "kubernetes_config_map" "oficina_producao" {
   }
 
   data = {
-    JWT_EXPIRATION = "86400000"
-    SERVER_PORT    = "8080"
+    JWT_EXPIRATION                             = "86400000"
+    SERVER_PORT                                = "8080"
     SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE = "3"
-    NOTIFICATIONS_PUBSUB_PROJECT_ID            = var.project_id
-    NOTIFICATIONS_PUBSUB_TOPIC                 = google_pubsub_topic.notificacoes_producao.name
-    NOTIFICATIONS_EMAIL_PROVIDER               = "pubsub"
     NEW_RELIC_APP_NAME                         = "oficina-app-producao"
+    # Fase 4: o OS Service orquestra a saga pelo Pub/Sub e consulta os
+    # outros serviços pelos Services internos do cluster
+    MENSAGERIA_PROVIDER             = "pubsub"
+    PUBSUB_PROJECT_ID               = var.project_id
+    PUBSUB_ASSINATURA_EVENTOS       = google_pubsub_subscription.os_eventos["producao"].name
+    PUBSUB_TOPICO_BILLING_COMANDOS  = google_pubsub_topic.billing_comandos["producao"].name
+    PUBSUB_TOPICO_EXECUCAO_COMANDOS = google_pubsub_topic.execucao_comandos["producao"].name
+    BILLING_URL                     = "http://oficina-billing"
+    EXECUCAO_URL                    = "http://oficina-execution"
   }
 }
 
@@ -200,14 +212,14 @@ resource "kubernetes_service_account" "app_producao" {
 
 resource "google_service_account_iam_member" "workload_identity_homolog" {
   service_account_id = "projects/${var.project_id}/serviceAccounts/${var.app_cloudsql_service_account_email}"
-  role                = "roles/iam.workloadIdentityUser"
-  member              = "serviceAccount:${var.project_id}.svc.id.goog[oficina-homolog/oficina-app]"
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "serviceAccount:${var.project_id}.svc.id.goog[oficina-homolog/oficina-app]"
 }
 
 resource "google_service_account_iam_member" "workload_identity_producao" {
   service_account_id = "projects/${var.project_id}/serviceAccounts/${var.app_cloudsql_service_account_email}"
-  role                = "roles/iam.workloadIdentityUser"
-  member              = "serviceAccount:${var.project_id}.svc.id.goog[oficina-producao/oficina-app]"
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "serviceAccount:${var.project_id}.svc.id.goog[oficina-producao/oficina-app]"
 }
 
 # ──────────────────────────────────────────
@@ -234,9 +246,9 @@ resource "google_api_gateway_api" "oficina" {
 }
 
 resource "google_api_gateway_api_config" "homolog" {
-  provider              = google-beta
-  api                   = google_api_gateway_api.oficina.api_id
-  api_config_id_prefix  = "homolog-"
+  provider             = google-beta
+  api                  = google_api_gateway_api.oficina.api_id
+  api_config_id_prefix = "homolog-"
 
   openapi_documents {
     document {
@@ -258,9 +270,9 @@ resource "google_api_gateway_gateway" "homolog" {
 }
 
 resource "google_api_gateway_api_config" "producao" {
-  provider              = google-beta
-  api                   = google_api_gateway_api.oficina.api_id
-  api_config_id_prefix  = "producao-"
+  provider             = google-beta
+  api                  = google_api_gateway_api.oficina.api_id
+  api_config_id_prefix = "producao-"
 
   openapi_documents {
     document {
@@ -283,7 +295,7 @@ resource "google_api_gateway_gateway" "producao" {
 
 # ──────────────────────────────────────────
 # Pub/Sub — notificação assíncrona de orçamento disponível.
-# A aplicação publica; a function de notificação (oficina-auth-function)
+# O Billing Service publica; a function de notificação (oficina-auth-function)
 # consome e manda o e-mail de fato.
 # ──────────────────────────────────────────
 resource "google_pubsub_topic" "notificacoes_homolog" {
@@ -294,14 +306,5 @@ resource "google_pubsub_topic" "notificacoes_producao" {
   name = "oficina-notificacoes-producao"
 }
 
-resource "google_pubsub_topic_iam_member" "app_publisher_homolog" {
-  topic  = google_pubsub_topic.notificacoes_homolog.name
-  role   = "roles/pubsub.publisher"
-  member = "serviceAccount:${var.app_cloudsql_service_account_email}"
-}
-
-resource "google_pubsub_topic_iam_member" "app_publisher_producao" {
-  topic  = google_pubsub_topic.notificacoes_producao.name
-  role   = "roles/pubsub.publisher"
-  member = "serviceAccount:${var.app_cloudsql_service_account_email}"
-}
+# Quem publica as notificações a partir da Fase 4 é o Billing Service (ver
+# fase4.tf); o OS Service não precisa mais de permissão neste tópico.

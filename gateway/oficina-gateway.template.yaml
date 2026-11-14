@@ -2,8 +2,9 @@ swagger: "2.0"
 info:
   title: oficina-api
   description: >-
-    Gateway público da aplicação oficina. Roteia todo o tráfego para o
-    backend (aplicação Spring Boot no GKE) preservando o path original.
+    Gateway público da oficina. Roteia todo o tráfego para o Ingress do GKE
+    preservando o path original; o Ingress separa por prefixo para cada
+    microsserviço (OS Service, Billing Service e Execution Service).
     A validação do token JWT é feita inteiramente pela própria aplicação
     (Spring Security). Dois cuidados pra isso funcionar: (1) sem
     `disable_auth: true` no x-google-backend, o ESPv2 (o proxy por trás do
@@ -25,45 +26,44 @@ x-google-backend:
 paths:
   /api/auth/login:
     post:
-      operationId: authLogin
+      operationId: postAuthLogin
       responses:
         "200":
           description: OK
   /api/auth/registrar:
     post:
-      operationId: authRegistrar
+      operationId: postAuthRegistrar
       responses:
         "200":
           description: OK
-
   /api/veiculos:
     post:
-      operationId: veiculosCriar
+      operationId: postVeiculos
       responses:
         "200":
           description: OK
     get:
-      operationId: veiculosListar
+      operationId: getVeiculos
       responses:
         "200":
           description: OK
   /api/veiculos/{id}:
     get:
-      operationId: veiculosBuscarPorId
+      operationId: getVeiculosId
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
         "200":
           description: OK
     put:
-      operationId: veiculosAtualizar
+      operationId: putVeiculosId
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
         "200":
           description: OK
     delete:
-      operationId: veiculosRemover
+      operationId: deleteVeiculosId
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -71,7 +71,7 @@ paths:
           description: OK
   /api/veiculos/placa/{placa}:
     get:
-      operationId: veiculosBuscarPorPlaca
+      operationId: getVeiculosPlacaPlaca
       parameters:
         - {name: placa, in: path, required: true, type: string}
       responses:
@@ -79,75 +79,73 @@ paths:
           description: OK
   /api/veiculos/cliente/{clienteId}:
     get:
-      operationId: veiculosBuscarPorCliente
+      operationId: getVeiculosClienteClienteid
       parameters:
         - {name: clienteId, in: path, required: true, type: string}
       responses:
         "200":
           description: OK
-
   /api/servicos:
     post:
-      operationId: servicosCriar
+      operationId: postServicos
       responses:
         "200":
           description: OK
     get:
-      operationId: servicosListar
+      operationId: getServicos
       responses:
         "200":
           description: OK
   /api/servicos/{id}:
     get:
-      operationId: servicosBuscarPorId
+      operationId: getServicosId
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
         "200":
           description: OK
     put:
-      operationId: servicosAtualizar
+      operationId: putServicosId
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
         "200":
           description: OK
     delete:
-      operationId: servicosRemover
+      operationId: deleteServicosId
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
         "200":
           description: OK
-
   /api/pecas:
     post:
-      operationId: pecasCriar
+      operationId: postPecas
       responses:
         "200":
           description: OK
     get:
-      operationId: pecasListar
+      operationId: getPecas
       responses:
         "200":
           description: OK
   /api/pecas/{id}:
     get:
-      operationId: pecasBuscarPorId
+      operationId: getPecasId
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
         "200":
           description: OK
     put:
-      operationId: pecasAtualizar
+      operationId: putPecasId
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
         "200":
           description: OK
     delete:
-      operationId: pecasRemover
+      operationId: deletePecasId
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -155,41 +153,40 @@ paths:
           description: OK
   /api/pecas/{id}/estoque:
     patch:
-      operationId: pecasAtualizarEstoque
+      operationId: patchPecasIdEstoque
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
         "200":
           description: OK
-
   /api/clientes:
     post:
-      operationId: clientesCriar
+      operationId: postClientes
       responses:
         "200":
           description: OK
     get:
-      operationId: clientesListar
+      operationId: getClientes
       responses:
         "200":
           description: OK
   /api/clientes/{id}:
     get:
-      operationId: clientesBuscarPorId
+      operationId: getClientesId
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
         "200":
           description: OK
     put:
-      operationId: clientesAtualizar
+      operationId: putClientesId
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
         "200":
           description: OK
     delete:
-      operationId: clientesRemover
+      operationId: deleteClientesId
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -197,39 +194,38 @@ paths:
           description: OK
   /api/clientes/documento/{documento}:
     get:
-      operationId: clientesBuscarPorDocumento
+      operationId: getClientesDocumentoDocumento
       parameters:
         - {name: documento, in: path, required: true, type: string}
       responses:
         "200":
           description: OK
-
   /api/ordens-servico:
     post:
-      operationId: ordensCriar
+      operationId: postOrdensServico
       responses:
         "200":
           description: OK
     get:
-      operationId: ordensListar
+      operationId: getOrdensServico
       responses:
         "200":
           description: OK
   /api/ordens-servico/ativas:
     get:
-      operationId: ordensListarAtivas
+      operationId: getOrdensServicoAtivas
       responses:
         "200":
           description: OK
   /api/ordens-servico/estatisticas:
     get:
-      operationId: ordensEstatisticas
+      operationId: getOrdensServicoEstatisticas
       responses:
         "200":
           description: OK
   /api/ordens-servico/status/{status}:
     get:
-      operationId: ordensBuscarPorStatus
+      operationId: getOrdensServicoStatusStatus
       parameters:
         - {name: status, in: path, required: true, type: string}
       responses:
@@ -237,7 +233,7 @@ paths:
           description: OK
   /api/ordens-servico/{id}:
     get:
-      operationId: ordensBuscarPorId
+      operationId: getOrdensServicoId
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -245,7 +241,7 @@ paths:
           description: OK
   /api/ordens-servico/{id}/status:
     get:
-      operationId: ordensConsultarStatus
+      operationId: getOrdensServicoIdStatus
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -253,7 +249,7 @@ paths:
           description: OK
   /api/ordens-servico/{id}/iniciar-diagnostico:
     post:
-      operationId: ordensIniciarDiagnostico
+      operationId: postOrdensServicoIdIniciarDiagnostico
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -261,23 +257,7 @@ paths:
           description: OK
   /api/ordens-servico/{id}/gerar-orcamento:
     post:
-      operationId: ordensGerarOrcamento
-      parameters:
-        - {name: id, in: path, required: true, type: string}
-      responses:
-        "200":
-          description: OK
-  /api/ordens-servico/{id}/aprovacao-orcamento:
-    post:
-      operationId: ordensAprovarOrcamento
-      parameters:
-        - {name: id, in: path, required: true, type: string}
-      responses:
-        "200":
-          description: OK
-  /api/ordens-servico/{id}/finalizar:
-    post:
-      operationId: ordensFinalizar
+      operationId: postOrdensServicoIdGerarOrcamento
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -285,7 +265,7 @@ paths:
           description: OK
   /api/ordens-servico/{id}/entregar:
     post:
-      operationId: ordensEntregar
+      operationId: postOrdensServicoIdEntregar
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -293,7 +273,7 @@ paths:
           description: OK
   /api/ordens-servico/{id}/servicos:
     post:
-      operationId: ordensAdicionarServico
+      operationId: postOrdensServicoIdServicos
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
@@ -301,16 +281,135 @@ paths:
           description: OK
   /api/ordens-servico/{id}/pecas:
     post:
-      operationId: ordensAdicionarPeca
+      operationId: postOrdensServicoIdPecas
+      parameters:
+        - {name: id, in: path, required: true, type: string}
+      responses:
+        "200":
+          description: OK
+  /api/ordens-servico/{id}/historico:
+    get:
+      operationId: getOrdensServicoIdHistorico
+      parameters:
+        - {name: id, in: path, required: true, type: string}
+      responses:
+        "200":
+          description: OK
+  /api/ordens-servico/{id}/saga:
+    get:
+      operationId: getOrdensServicoIdSaga
+      parameters:
+        - {name: id, in: path, required: true, type: string}
+      responses:
+        "200":
+          description: OK
+  /api/ordens-servico/{id}/acompanhamento:
+    get:
+      operationId: getOrdensServicoIdAcompanhamento
       parameters:
         - {name: id, in: path, required: true, type: string}
       responses:
         "200":
           description: OK
 
-  /actuator/health:
+  # ── Billing Service ──
+  /api/orcamentos/{id}:
     get:
-      operationId: actuatorHealth
+      operationId: getOrcamentosId
+      parameters:
+        - {name: id, in: path, required: true, type: string}
+      responses:
+        "200":
+          description: OK
+  /api/orcamentos/ordem-servico/{ordemServicoId}:
+    get:
+      operationId: getOrcamentosOrdemServicoOrdemservicoid
+      parameters:
+        - {name: ordemServicoId, in: path, required: true, type: string}
+      responses:
+        "200":
+          description: OK
+  /api/orcamentos/{id}/aprovacao:
+    post:
+      operationId: postOrcamentosIdAprovacao
+      parameters:
+        - {name: id, in: path, required: true, type: string}
+      responses:
+        "200":
+          description: OK
+  /api/pagamentos/webhook:
+    post:
+      operationId: postPagamentosWebhook
+      responses:
+        "200":
+          description: OK
+  /api/pagamentos/simulacao/{orcamentoId}:
+    post:
+      operationId: postPagamentosSimulacaoOrcamentoid
+      parameters:
+        - {name: orcamentoId, in: path, required: true, type: string}
+      responses:
+        "200":
+          description: OK
+
+  # ── Execution Service ──
+  /api/execucoes/fila:
+    get:
+      operationId: getExecucoesFila
+      responses:
+        "200":
+          description: OK
+  /api/execucoes/proxima:
+    post:
+      operationId: postExecucoesProxima
+      responses:
+        "200":
+          description: OK
+  /api/execucoes/{id}:
+    get:
+      operationId: getExecucoesId
+      parameters:
+        - {name: id, in: path, required: true, type: string}
+      responses:
+        "200":
+          description: OK
+  /api/execucoes/ordem-servico/{ordemServicoId}:
+    get:
+      operationId: getExecucoesOrdemServicoOrdemservicoid
+      parameters:
+        - {name: ordemServicoId, in: path, required: true, type: string}
+      responses:
+        "200":
+          description: OK
+  /api/execucoes/{id}/diagnostico:
+    post:
+      operationId: postExecucoesIdDiagnostico
+      parameters:
+        - {name: id, in: path, required: true, type: string}
+      responses:
+        "200":
+          description: OK
+  /api/execucoes/{id}/reparo:
+    post:
+      operationId: postExecucoesIdReparo
+      parameters:
+        - {name: id, in: path, required: true, type: string}
+      responses:
+        "200":
+          description: OK
+  /api/execucoes/{id}/finalizar:
+    post:
+      operationId: postExecucoesIdFinalizar
+      parameters:
+        - {name: id, in: path, required: true, type: string}
+      responses:
+        "200":
+          description: OK
+  /api/execucoes/{id}/falha:
+    post:
+      operationId: postExecucoesIdFalha
+      parameters:
+        - {name: id, in: path, required: true, type: string}
       responses:
         "200":
           description: OK

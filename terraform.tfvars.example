@@ -1,3 +1,4 @@
 project_id                         = "oficina-501820"
 app_cloudsql_service_account_email = "oficina-app-cloudsql@oficina-501820.iam.gserviceaccount.com"
 cloudsql_instance_connection_name  = "oficina-501820:southamerica-east1:oficina-postgres"
+execucao_service_account_email     = "oficina-execucao@oficina-501820.iam.gserviceaccount.com"
