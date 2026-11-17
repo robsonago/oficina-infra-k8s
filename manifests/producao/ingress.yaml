@@ -1,3 +1,7 @@
+# Porta de entrada HTTPS do cluster (atrás do API Gateway). Cada microsserviço
+# recebe os prefixos que são dele; o resto (cadastros, OS, auth) vai para o
+# OS Service. Os Deployments/Services de cada serviço ficam no próprio
+# repositório (pasta k8s/) e são aplicados pelo pipeline de cada um.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -13,3 +17,41 @@ spec:
       name: oficina-app
       port:
         number: 80
+  rules:
+    - http:
+        paths:
+          - path: /api/orcamentos
+            pathType: Prefix
+            backend:
+              service:
+                name: oficina-billing
+                port:
+                  number: 80
+          - path: /api/pagamentos
+            pathType: Prefix
+            backend:
+              service:
+                name: oficina-billing
+                port:
+                  number: 80
+          - path: /billing
+            pathType: Prefix
+            backend:
+              service:
+                name: oficina-billing
+                port:
+                  number: 80
+          - path: /api/execucoes
+            pathType: Prefix
+            backend:
+              service:
+                name: oficina-execution
+                port:
+                  number: 80
+          - path: /execucao
+            pathType: Prefix
+            backend:
+              service:
+                name: oficina-execution
+                port:
+                  number: 80

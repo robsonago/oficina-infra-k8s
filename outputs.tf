@@ -47,3 +47,18 @@ output "gateway_homolog_url" {
 output "gateway_producao_url" {
   value = "https://${google_api_gateway_gateway.producao.default_hostname}"
 }
+
+output "billing_service_account_email" {
+  value = google_service_account.billing.email
+}
+
+output "topicos_saga" {
+  value = {
+    for a in local.ambientes : a => {
+      billing_comandos  = google_pubsub_topic.billing_comandos[a].name
+      execucao_comandos = google_pubsub_topic.execucao_comandos[a].name
+      os_eventos        = google_pubsub_topic.os_eventos[a].name
+      dlq               = google_pubsub_topic.saga_dlq[a].name
+    }
+  }
+}

@@ -54,3 +54,19 @@ variable "cloudsql_instance_connection_name" {
   description = "Connection name da instância Cloud SQL (projeto:região:instância), usado pelo Cloud SQL Auth Proxy"
   type        = string
 }
+
+variable "execucao_service_account_email" {
+  description = "Service account do Execution Service, criada em oficina-infra-db (output execucao_service_account_email)"
+  type        = string
+}
+
+variable "pagamento_provider" {
+  description = "Gateway de pagamento do Billing: \"simulado\" (sem credencial, para demonstração) ou \"mercadopago\" (lê os secrets mercadopago-access-token e mercadopago-webhook-secret do Secret Manager)"
+  type        = string
+  default     = "simulado"
+
+  validation {
+    condition     = contains(["simulado", "mercadopago"], var.pagamento_provider)
+    error_message = "pagamento_provider deve ser \"simulado\" ou \"mercadopago\"."
+  }
+}
