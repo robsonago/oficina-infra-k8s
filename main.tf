@@ -274,6 +274,10 @@ resource "google_api_gateway_api_config" "producao" {
   api                  = google_api_gateway_api.oficina.api_id
   api_config_id_prefix = "producao-"
 
+  # Dois configs criados ao mesmo tempo na mesma API fazem o GCP cancelar um
+  # deles ("superseding API Config"); por isso produção espera homologação.
+  depends_on = [google_api_gateway_api_config.homolog]
+
   openapi_documents {
     document {
       path     = "openapi.yaml"
